@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinIO MC Wrapper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #c72e29;
+            font-size: 24px;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            padding: 0 20px;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .tab:hover {
+            color: #c72e29;
+        }
+
+        .tab.active {
+            color: #c72e29;
+            border-bottom-color: #c72e29;
+        }
+
+        .content {
+            height: calc(100vh - 140px);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #c72e29;
+        }
+
+        button {
+            background: #c72e29;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #a02420;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        button.secondary:hover {
+            background: #5a6268;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        button.danger:hover {
+            background: #c82333;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+            white-space: pre-wrap;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #c72e29;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .list-container {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            white-space: pre;
+        }
+
+        .policy-editor {
+            height: 300px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
+
+        .url-display {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            word-break: break-all;
+        }
+
+        .bucket-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .bucket-item:last-child {
+            border-bottom: none;
+        }
+
+        .bucket-status {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .bucket-status.public {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>MinIO MC Wrapper</h1>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('connection')">Connection</div>
+        <div class="tab" onclick="switchTab('buckets')">Buckets</div>
+        <div class="tab" onclick="switchTab('users')">Users</div>
+        <div class="tab" onclick="switchTab('policies')">Public Access</div>
+    </div>
+
+    <div class="content">
+        <!-- Connection Tab -->
+        <div id="connection-tab" class="tab-content active">
+            <h2>Connection Settings</h2>
+            <div class="form-group">
+                <label for="alias">Alias Name:</label>
+                <input type="text" id="alias" value="myminio" placeholder="e.g., myminio">
+            </div>
+            
+            <div class="form-group">
+                <label for="url">Server URL:</label>
+                <input type="text" id="url" placeholder="https://s3.example.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="accessKey">Access Key:</label>
+                <input type="text" id="accessKey" placeholder="Your access key">
+            </div>
+            
+            <div class="form-group">
+                <label for="secretKey">Secret Key:</label>
+                <input type="password" id="secretKey" placeholder="Your secret key">
+            </div>
+            
+            <div class="button-group">
+                <button onclick="saveConnection()">Save Connection</button>
+                <button onclick="testConnection()">Test Connection</button>
+            </div>
+
+            <div class="loading" id="connection-loading">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+
+            <div class="status" id="connection-status"></div>
+        </div>
+
+        <!-- Buckets Tab -->
+        <div id="buckets-tab" class="tab-content">
+            <h2>Bucket Management</h2>
+            
+            <div class="form-group">
+                <label for="bucketName">New Bucket Name:</label>
+                <input type="text" id="bucketName" placeholder="my-bucket-name">
+            </div>
+            
+            <div class="button-group">
+                <button onclick="createBucket()">Create Bucket</button>
+                <button onclick="listBuckets()">Refresh Bucket List</button>
+            </div>
+
+            <div class="section">
+                <h2>Existing Buckets</h2>
+                <div class="list-container" id="bucket-list">
+                    Click "Refresh Bucket List" to load buckets
+                </div>
+            </div>
+
+            <div class="loading" id="buckets-loading">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+
+            <div class="status" id="buckets-status"></div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users-tab" class="tab-content">
+            <h2>User Management</h2>
+            
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" placeholder="testuser123">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Strong password">
+            </div>
+            
+            <div class="form-group">
+                <label for="policy">Policy:</label>
+                <select id="policy">
+                    <option value="readwrite">Read/Write</option>
+                    <option value="readonly">Read Only</option>
+                    <option value="writeonly">Write Only</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="createUser()">Create User</button>
+                <button onclick="listUsers()">Refresh User List</button>
+            </div>
+
+            <div class="section">
+                <h2>Existing Users</h2>
+                <div class="list-container" id="user-list">
+                    Click "Refresh User List" to load users
+                </div>
+                <p style="margin-top: 10px; font-size: 13px; color: #666;">
+                    Access Key = Username | Secret Key = Password
+                </p>
+            </div>
+
+            <div class="loading" id="users-loading">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+
+            <div class="status" id="users-status"></div>
+        </div>
+
+        <!-- Public Access Tab -->
+        <div id="policies-tab" class="tab-content">
+            <h2>Public Bucket Configuration</h2>
+            
+            <div class="form-group">
+                <label for="publicBucketName">Bucket Name:</label>
+                <input type="text" id="publicBucketName" placeholder="Enter bucket name">
+                <button onclick="checkBucketStatus()" style="margin-top: 10px;">Check Status</button>
+            </div>
+
+            <div class="section">
+                <h2>Access Policy JSON</h2>
+                <div class="form-group">
+                    <label for="accessLevel">Quick Templates:</label>
+                    <select id="accessLevel" onchange="updatePolicyTemplate()">
+                        <option value="download">Download Only (Read)</option>
+                        <option value="upload">Upload + Download (Read/Write)</option>
+                        <option value="custom">Custom Policy</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="policyJson">Policy JSON:</label>
+                    <textarea id="policyJson" class="policy-editor"></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button onclick="makeBucketPublic()">Make Bucket Public</button>
+                    <button onclick="removeBucketPublic()" class="danger">Remove Public Access</button>
+                </div>
+            </div>
+
+            <div class="loading" id="policies-loading">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+
+            <div class="status" id="policies-status"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentAlias = null;
+        let currentServerUrl = null;
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            // Auto-refresh lists when switching tabs
+            if (tabName === 'buckets' && currentAlias) {
+                listBuckets();
+            } else if (tabName === 'users' && currentAlias) {
+                listUsers();
+            }
+        }
+
+        function showStatus(tabId, message, type) {
+            const status = document.getElementById(`${tabId}-status`);
+            status.className = `status ${type}`;
+            status.textContent = message;
+            status.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function showLoading(tabId, show) {
+            document.getElementById(`${tabId}-loading`).className = show ? 'loading active' : 'loading';
+            // Disable all buttons in current tab while loading
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab) {
+                activeTab.querySelectorAll('button').forEach(btn => btn.disabled = show);
+            }
+        }
+
+        // Connection functions
+        async function saveConnection() {
+            const alias = document.getElementById('alias').value;
+            const url = document.getElementById('url').value;
+            const accessKey = document.getElementById('accessKey').value;
+            const secretKey = document.getElementById('secretKey').value;
+
+            if (!alias || !url || !accessKey || !secretKey) {
+                showStatus('connection', 'Please fill in all connection fields', 'error');
+                return;
+            }
+
+            showLoading('connection', true);
+
+            try {
+                await window.electronAPI.setAlias({ alias, url, accessKey, secretKey });
+                currentAlias = alias;
+                currentServerUrl = url;
+                showStatus('connection', 'Connection saved successfully!', 'success');
+                
+                // Initialize policy template
+                updatePolicyTemplate();
+            } catch (error) {
+                showStatus('connection', `Error: ${error}`, 'error');
+            } finally {
+                showLoading('connection', false);
+            }
+        }
+
+        async function testConnection() {
+            const alias = document.getElementById('alias').value;
+
+            if (!alias) {
+                showStatus('connection', 'Please enter an alias name', 'error');
+                return;
+            }
+
+            showLoading('connection', true);
+
+            try {
+                await window.electronAPI.testConnection(alias);
+                currentAlias = alias;
+                showStatus('connection', 'Connection successful!', 'success');
+            } catch (error) {
+                showStatus('connection', `Connection failed: ${error}`, 'error');
+            } finally {
+                showLoading('connection', false);
+            }
+        }
+
+        // Bucket functions
+        async function createBucket() {
+            const bucketName = document.getElementById('bucketName').value;
+
+            if (!currentAlias || !bucketName) {
+                showStatus('buckets', 'Please connect first and enter bucket name', 'error');
+                return;
+            }
+
+            showLoading('buckets', true);
+
+            try {
+                await window.electronAPI.createBucket({ alias: currentAlias, bucketName });
+                showStatus('buckets', `Bucket '${bucketName}' created successfully!`, 'success');
+                document.getElementById('bucketName').value = '';
+                listBuckets();
+            } catch (error) {
+                showStatus('buckets', `Error creating bucket: ${error}`, 'error');
+            } finally {
+                showLoading('buckets', false);
+            }
+        }
+
+        async function listBuckets() {
+            if (!currentAlias) {
+                showStatus('buckets', 'Please connect first', 'error');
+                return;
+            }
+
+            showLoading('buckets', true);
+
+            try {
+                const result = await window.electronAPI.listBuckets(currentAlias);
+                document.getElementById('bucket-list').textContent = result || 'No buckets found';
+            } catch (error) {
+                showStatus('buckets', `Error listing buckets: ${error}`, 'error');
+            } finally {
+                showLoading('buckets', false);
+            }
+        }
+
+        // User functions
+        async function createUser() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const policy = document.getElementById('policy').value;
+
+            if (!currentAlias || !username || !password) {
+                showStatus('users', 'Please connect first and fill all fields', 'error');
+                return;
+            }
+
+            showLoading('users', true);
+
+            try {
+                // Create user
+                await window.electronAPI.createUser({ alias: currentAlias, username, password });
+                
+                // Attach policy
+                await window.electronAPI.attachPolicy({ alias: currentAlias, username, policy });
+                
+                showStatus('users', `User '${username}' created with ${policy} permissions!\nAccess Key: ${username}\nSecret Key: ${password}`, 'success');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                listUsers();
+            } catch (error) {
+                showStatus('users', `Error: ${error}`, 'error');
+            } finally {
+                showLoading('users', false);
+            }
+        }
+
+        async function listUsers() {
+            if (!currentAlias) {
+                showStatus('users', 'Please connect first', 'error');
+                return;
+            }
+
+            showLoading('users', true);
+
+            try {
+                const result = await window.electronAPI.listUsers(currentAlias);
+                document.getElementById('user-list').textContent = result || 'No users found';
+            } catch (error) {
+                showStatus('users', `Error listing users: ${error}`, 'error');
+            } finally {
+                showLoading('users', false);
+            }
+        }
+
+        // Policy functions
+        function updatePolicyTemplate() {
+            const accessLevel = document.getElementById('accessLevel').value;
+            const bucketName = document.getElementById('publicBucketName').value || 'BUCKET_NAME';
+            const policyTextarea = document.getElementById('policyJson');
+
+            let policy;
+            if (accessLevel === 'download') {
+                policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": ["s3:GetObject"],
+                            "Effect": "Allow",
+                            "Principal": {"AWS": ["*"]},
+                            "Resource": [`arn:aws:s3:::${bucketName}/*`]
+                        }
+                    ]
+                };
+            } else if (accessLevel === 'upload') {
+                policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": ["s3:GetObject", "s3:PutObject"],
+                            "Effect": "Allow",
+                            "Principal": {"AWS": ["*"]},
+                            "Resource": [`arn:aws:s3:::${bucketName}/*`]
+                        }
+                    ]
+                };
+            } else {
+                // Custom - keep existing
+                return;
+            }
+
+            policyTextarea.value = JSON.stringify(policy, null, 2);
+        }
+
+        async function checkBucketStatus() {
+            const bucketName = document.getElementById('publicBucketName').value;
+
+            if (!currentAlias || !bucketName) {
+                showStatus('policies', 'Please connect first and enter bucket name', 'error');
+                return;
+            }
+
+            showLoading('policies', true);
+
+            try {
+                const result = await window.electronAPI.checkBucketPolicy({ 
+                    alias: currentAlias, 
+                    bucketName 
+                });
+                
+                const isPublic = result && result.includes('download');
+                showStatus('policies', 
+                    isPublic ? `Bucket '${bucketName}' has public access` : `Bucket '${bucketName}' is private`, 
+                    'info'
+                );
+            } catch (error) {
+                showStatus('policies', `Error checking bucket: ${error}`, 'error');
+            } finally {
+                showLoading('policies', false);
+            }
+        }
+
+        async function makeBucketPublic() {
+            const bucketName = document.getElementById('publicBucketName').value;
+            const policyJson = document.getElementById('policyJson').value;
+
+            if (!currentAlias || !bucketName || !policyJson) {
+                showStatus('policies', 'Please fill all fields', 'error');
+                return;
+            }
+
+            // Validate bucket name
+            if (!/^[a-z0-9][a-z0-9\-]*[a-z0-9]$/.test(bucketName) || bucketName.length < 3) {
+                showStatus('policies', 'Invalid bucket name. Use lowercase letters, numbers, and hyphens only.', 'error');
+                return;
+            }
+
+            // Validate JSON
+            try {
+                JSON.parse(policyJson);
+            } catch (e) {
+                showStatus('policies', 'Invalid JSON policy', 'error');
+                return;
+            }
+
+            showLoading('policies', true);
+
+            try {
+                const result = await window.electronAPI.makeBucketPublic({ 
+                    alias: currentAlias, 
+                    bucketName,
+                    policyJson,
+                    serverUrl: currentServerUrl
+                });
+                
+                showStatus('policies', 
+                    `${result.message}\n\nPublic URL:\n${result.publicUrl}\n\nFiles will be accessible at:\n${result.publicUrl}filename.jpg`, 
+                    'success'
+                );
+
+                // Show URL in special display
+                const urlDisplay = document.createElement('div');
+                urlDisplay.className = 'url-display';
+                urlDisplay.innerHTML = `<strong>Public URL:</strong><br>${result.publicUrl}`;
+                const statusEl = document.getElementById('policies-status');
+                statusEl.appendChild(urlDisplay);
+
+            } catch (error) {
+                showStatus('policies', `Error: ${error}`, 'error');
+            } finally {
+                showLoading('policies', false);
+            }
+        }
+
+        async function removeBucketPublic() {
+            const bucketName = document.getElementById('publicBucketName').value;
+
+            if (!currentAlias || !bucketName) {
+                showStatus('policies', 'Please enter bucket name', 'error');
+                return;
+            }
+
+            if (!confirm(`Remove public access from bucket '${bucketName}'?`)) {
+                return;
+            }
+
+            showLoading('policies', true);
+
+            try {
+                await window.electronAPI.removeBucketPublic({ 
+                    alias: currentAlias, 
+                    bucketName 
+                });
+                showStatus('policies', `Public access removed from '${bucketName}'`, 'success');
+            } catch (error) {
+                showStatus('policies', `Error: ${error}`, 'error');
+            } finally {
+                showLoading('policies', false);
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            updatePolicyTemplate();
+            
+            // Update policy when bucket name changes
+            document.getElementById('publicBucketName').addEventListener('input', () => {
+                if (document.getElementById('accessLevel').value !== 'custom') {
+                    updatePolicyTemplate();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

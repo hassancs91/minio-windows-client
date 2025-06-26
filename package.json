@@ -1,0 +1,35 @@
+{
+  "name": "minio-mc-wrapper",
+  "version": "2.0.0",
+  "description": "Simple MinIO MC GUI Wrapper",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "dist": "electron-builder --win"
+  },
+  "keywords": ["minio", "mc", "gui"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.yourname.miniomcwrapper",
+    "productName": "MinIO MC Wrapper",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": "mc.exe",
+        "to": "mc.exe"
+      }
+    ]
+  }
+}
