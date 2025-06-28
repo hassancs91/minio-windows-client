@@ -4,5 +4,4 @@ dist/
 .DS_Store
 Thumbs.db
 mc.exe
-*.exe
 !resources/mc.exe
