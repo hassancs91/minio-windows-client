@@ -43,7 +43,7 @@ app.on('window-all-closed', () => {
 // IPC handlers for mc commands
 ipcMain.handle('set-alias', async (event, { alias, url, accessKey, secretKey }) => {
   return new Promise((resolve, reject) => {
-    const cmd = `"${mcPath}" alias set ${alias} ${url} ${accessKey} ${secretKey}`;
+    const cmd = `"${mcPath}" alias set ${alias} ${url} ${accessKey} "${secretKey}"`;
     
     exec(cmd, { 
       env: { ...process.env, MC_HOST_CONFIG: path.join(os.homedir(), '.mc') }
@@ -132,7 +132,7 @@ ipcMain.handle('list-users', async (event, alias) => {
 
 ipcMain.handle('create-user', async (event, { alias, username, password }) => {
   return new Promise((resolve, reject) => {
-    const cmd = `"${mcPath}" admin user add ${alias} ${username} ${password}`;
+    const cmd = `"${mcPath}" admin user add ${alias} ${username} "${password}"`;
     
     exec(cmd, { 
       env: { ...process.env, MC_HOST_CONFIG: path.join(os.homedir(), '.mc') }
